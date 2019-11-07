@@ -182,27 +182,20 @@ tetrominoes = [
 ROW = 20 # x
 COLUMN = 10 # y
 
-def create_board
-  board = Array.new()
-
-  ROW.times do |i|
-    board[i] = []
-    COLUMN.times do 
-      board[i].push(0)
-    end
-  end
-
-  pp board
-  
-  return board
+def create_square(x, y, size, color)
+  @squares << Square.new(x: x, y: y,size: size, color: color)
 end
 
 def draw_board(board)
+
+  @squares.each {|s| s.remove}
+  @squares = []
+
   ROW.times do |i|
     COLUMN.times do |j|
-      color = board[i][j] == 0 ? 'white' : 'red'
-      Square.new(x: j*25, y: i*25, size: 25, color: color)
-      #Square.new(x: j*25, y: (i+4)*25, size: 25, color: ['white', 'black', 'red', 'yellow', 'green', 'blue'].sample)
+      if board[i][j] != 0
+        create_square(j*25, i*25, 25, 'red')
+      end
     end
   end
 end
@@ -210,24 +203,22 @@ end
 def draw_piece(piece, begin_column, begin_row)
   piece.each_with_index do |x, xi|
     x.each_with_index do |y, yi|
-      puts "#{xi}#{yi} - #{y}"
-      if y != 0 
-        Square.new(x: (yi+begin_column)*25, y: (xi+begin_row)*25, size: 25, color: 'red')
+      if y != 0
+        create_square((yi+begin_column)*25, (xi+begin_row-1)*25, 25, 'red')
       end
     end
   end
 end
 
 def detect_colision(board, piece, begin_column, begin_row)
-  puts "DETECT COLISION"
-  puts "begin_column #{begin_column}"
-  puts "begin_row #{begin_row}"
+  # loop the tetromino array
   piece.each_with_index do |x, xi|
     x.each_with_index do |y, yi|
-      puts "[#{xi}][#{yi}] - #{y}"
+      # check if the position is a piece part
       if y == 1
-        puts "board [#{xi+begin_row}][#{yi+begin_column}] - #{board[xi+begin_row][yi+begin_column]}"
-        if board[xi+begin_row][yi+begin_column] == 1
+        if xi+begin_row >= ROW
+          return 1
+        elsif board[xi+begin_row][yi+begin_column] == 1
           return 1
         end
       end
@@ -235,7 +226,18 @@ def detect_colision(board, piece, begin_column, begin_row)
 
   end
 
-  print "\n\n"
+  return 0
+end
+
+def hit_walls(board, piece, begin_column, begin_row)
+  # loop the tetromino array
+  piece.each_with_index do |x, xi|
+    x.each_with_index do |y, yi|
+      if (y == 1 && (yi+begin_column <= 0 || yi+begin_column >= COLUMN-1))
+        return 1
+      end
+    end
+  end
 
   return 0
 end
@@ -250,32 +252,31 @@ def fuse_piece_to_board(board, piece, begin_column, begin_row)
   end
 end
 
+@squares = []
 
-board = create_board
+board = Array.new(ROW){Array.new(COLUMN){0}}
 
 set title: "Tetris - Ruby Edition!"
+set background: 'white'
 
 # Set the window size
 set width: 250, height: 500
-
-# Pre placed square to test piece collision
-board[18][4] = 1
-board[18][5] = 1
-board[19][4] = 1
-board[19][5] = 1
 
 piece = tetrominoes[rand(6)][0]
 begin_column = COLUMN/2 - piece[0].size/2
 begin_row = 0
 
-tick = 0
-
-update do
-  if tick % 5 == 0
-
-    draw_board(board)
+on :key_down do |event|
+  if event.key == 'left'
+    if hit_walls(board, piece, begin_column, begin_row) == 0 then
+      begin_column -= 1
+    end
+  elsif event.key == 'right'
+    if hit_walls(board, piece, begin_column, begin_row) == 0 then
+      begin_column += 1
+    end
+  elsif event.key == "down"
     if detect_colision(board, piece, begin_column, begin_row) == 0 then
-      draw_piece(piece, begin_column, begin_row)
       begin_row += 1
     else
       fuse_piece_to_board(board, piece, begin_column, begin_row)
@@ -283,6 +284,27 @@ update do
       begin_column = COLUMN/2 - piece[0].size/2
       begin_row = 0
     end
+  end
+  draw_board(board)
+  draw_piece(piece, begin_column, begin_row)
+end
+
+tick = 0
+
+update do
+  if tick % 60 == 0
+
+    if detect_colision(board, piece, begin_column, begin_row) == 0 then
+      begin_row += 1
+    else
+      fuse_piece_to_board(board, piece, begin_column, begin_row)
+      piece = tetrominoes[rand(6)][0]
+      begin_column = COLUMN/2 - piece[0].size/2
+      begin_row = 0
+    end
+
+    draw_board(board)
+    draw_piece(piece, begin_column, begin_row)
 
   end
 
