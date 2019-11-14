@@ -54,12 +54,14 @@ tetrominoes = [
   ]
 ]
 
-ROW = 20 # x
+ROW = 16 # x
 COLUMN = 10 # y
-COLORS = {1 => "red", 2 => "teal", 3 => "purple", 4 => "orange", 5 => "green", 6 => "blue", 7 => "yellow"}
+SQUARE_SIZE = 25
+BOARD_OFFSET = 50
+COLORS = {1 => "1.png", 2 => "2.png", 3 => "3.png", 4 => "4.png", 5 => "5.png", 6 => "6.png", 7 => "7.png"}
 
 def create_square(x, y, size, color)
-  @squares << Square.new(x: x, y: y,size: size, color: COLORS[color])
+  @squares << Image.new("images/#{COLORS[color]}", x: x, y: y, width: SQUARE_SIZE, height: SQUARE_SIZE)
 end
 
 def draw_board(board)
@@ -70,7 +72,7 @@ def draw_board(board)
   ROW.times do |i|
     COLUMN.times do |j|
       if board[i][j] != 0
-        create_square(j*25, i*25, 25, board[i][j])
+        create_square(j*SQUARE_SIZE+BOARD_OFFSET, i*SQUARE_SIZE, SQUARE_SIZE, board[i][j])
       end
     end
   end
@@ -80,7 +82,7 @@ def draw_piece(piece, begin_column, begin_row)
   piece.each_with_index do |x, xi|
     x.each_with_index do |y, yi|
       if y != 0
-        create_square((yi+begin_column)*25, (xi+begin_row-1)*25, 25, y)
+        create_square((yi+begin_column)*SQUARE_SIZE+BOARD_OFFSET, (xi+begin_row-1)*SQUARE_SIZE, SQUARE_SIZE, y)
       end
     end
   end
@@ -156,9 +158,10 @@ board = Array.new(ROW){Array.new(COLUMN){0}}
 
 set title: "Tetris - Ruby Edition!"
 set background: 'white'
+Image.new("images/board.png", width: 500, height: 400)
 
 # Set the window size
-set width: 250, height: 500
+set width: 500, height: 400
 
 piece = tetrominoes[rand(7)]
 begin_column = COLUMN/2 - piece[0].size/2
@@ -173,7 +176,8 @@ on :key_down do |event|
     if hit_right_wall(board, piece, begin_column, begin_row) == 0 then
       begin_column += 1
     end
-  elsif event.key == "up"
+  elsif event.key == "space"
+    # rotate the teromino
     piece = piece.reverse.transpose
   elsif event.key == "down"
     if detect_colision(board, piece, begin_column, begin_row) == 0 then
