@@ -93,42 +93,27 @@ def detect_colision(board, piece, begin_column, begin_row)
   piece.each_with_index do |x, xi|
     x.each_with_index do |y, yi|
       # check if the position is a piece part
-      if y > 0
-        if xi+begin_row >= ROW || board[xi+begin_row][yi+begin_column] > 0
-          return 1
-        end
+      if y > 0 && (xi+begin_row >= ROW || board[xi+begin_row][yi+begin_column] > 0) then
+        return true
       end
     end
 
   end
 
-  return 0
+  return false
 end
 
-def hit_left_wall(board, piece, begin_column, begin_row)
+def hit_wall(board, piece, begin_column, begin_row, direction)
   # loop the tetromino array
   piece.each_with_index do |x, xi|
     x.each_with_index do |y, yi|
-      if y > 0 && yi+begin_column <= 0
-        return 1
+      if (y > 0 && (yi + begin_column + direction < 0 || yi + begin_column + direction > COLUMN-1 || board[xi][yi + direction] > 0))
+        return true
       end
     end
   end
 
-  return 0
-end
-
-def hit_right_wall(board, piece, begin_column, begin_row)
-  # loop the tetromino array
-  piece.each_with_index do |x, xi|
-    x.each_with_index do |y, yi|
-      if y > 0 && yi+begin_column >= COLUMN-1
-        return 1
-      end
-    end
-  end
-
-  return 0
+  return false
 end
 
 def check_full_lines(board)
@@ -169,18 +154,21 @@ begin_row = 0
 
 on :key_down do |event|
   if event.key == "left"
-    if hit_left_wall(board, piece, begin_column, begin_row) == 0 then
+    if !hit_wall(board, piece, begin_column, begin_row, -1)
       begin_column -= 1
     end
   elsif event.key == "right"
-    if hit_right_wall(board, piece, begin_column, begin_row) == 0 then
+    if !hit_wall(board, piece, begin_column, begin_row, +1)
       begin_column += 1
     end
   elsif event.key == "space"
-    # rotate the teromino
-    piece = piece.reverse.transpose
+    # rotate the teromino if it does not colide
+    rotated_piece = piece.reverse.transpose
+    if !hit_wall(board, rotated_piece, begin_column, begin_row, 0) then
+      piece = piece.reverse.transpose
+    end
   elsif event.key == "down"
-    if detect_colision(board, piece, begin_column, begin_row) == 0 then
+    if !detect_colision(board, piece, begin_column, begin_row) then
       begin_row += 1
     else
       fuse_piece_to_board(board, piece, begin_column, begin_row)
@@ -198,7 +186,7 @@ tick = 0
 update do
   if tick % 10 == 0
 
-    if detect_colision(board, piece, begin_column, begin_row) == 0 then
+    if !detect_colision(board, piece, begin_column, begin_row) then
       begin_row += 1
     else
       fuse_piece_to_board(board, piece, begin_column, begin_row)
