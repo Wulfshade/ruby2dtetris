@@ -59,15 +59,22 @@ COLUMN = 10 # y
 SQUARE_SIZE = 25
 BOARD_OFFSET = 50
 COLORS = {1 => "1.png", 2 => "2.png", 3 => "3.png", 4 => "4.png", 5 => "5.png", 6 => "6.png", 7 => "7.png"}
+@score = 0
+@level = 1
+@lines = 0
+@objects = []
 
 def create_square(x, y, size, color)
-  @squares << Image.new("images/#{COLORS[color]}", x: x, y: y, width: SQUARE_SIZE, height: SQUARE_SIZE)
+  @objects << Image.new("images/#{COLORS[color]}", x: x, y: y, width: SQUARE_SIZE, height: SQUARE_SIZE)
 end
 
 def draw_board(board)
 
-  @squares.each {|s| s.remove}
-  @squares = []
+  @objects.each {|s| s.remove}
+  @objects = []
+  @objects << Text.new(@score, x: 350, y: 65, font: 'early_gameboy.ttf', size: 20, color: '#262626')
+  @objects << Text.new(@level, x: 400, y: 155, font: 'early_gameboy.ttf', size: 20, color: '#262626')
+  @objects << Text.new(@lines, x: 400, y: 220, font: 'early_gameboy.ttf', size: 20, color: '#262626')
 
   ROW.times do |i|
     COLUMN.times do |j|
@@ -121,6 +128,8 @@ def check_full_lines(board)
     if not board[index].include?(0) then
       board.delete_at(index)
       board.unshift([0,0,0,0,0,0,0,0,0,0])
+      @score += 1
+      @lines += 1
     end
   end
 end
@@ -136,8 +145,6 @@ def fuse_piece_to_board(board, piece, begin_column, begin_row)
 
   check_full_lines(board)
 end
-
-@squares = []
 
 board = Array.new(ROW){Array.new(COLUMN){0}}
 
