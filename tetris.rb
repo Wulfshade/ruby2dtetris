@@ -54,11 +54,14 @@ tetrominoes = [
   ]
 ]
 
+# Game constants
 ROW = 16 # x
 COLUMN = 10 # y
 SQUARE_SIZE = 25
 BOARD_OFFSET = 50
 COLORS = {1 => "1.png", 2 => "2.png", 3 => "3.png", 4 => "4.png", 5 => "5.png", 6 => "6.png", 7 => "7.png"}
+
+#Global variables
 @score = 0
 @level = 1
 @lines = 0
@@ -95,26 +98,18 @@ def draw_piece(piece, begin_column, begin_row)
   end
 end
 
-def detect_colision(board, piece, begin_column, begin_row)
+def detect_colision(board, piece, begin_column, begin_row, direction=0)
   # loop the tetromino array
   piece.each_with_index do |x, xi|
     x.each_with_index do |y, yi|
-      # check if the position is a piece part
-      if y > 0 && (xi+begin_row >= ROW || board[xi+begin_row][yi+begin_column] > 0) then
-        return true
-      end
-    end
-
-  end
-
-  return false
-end
-
-def hit_wall(board, piece, begin_column, begin_row, direction)
-  # loop the tetromino array
-  piece.each_with_index do |x, xi|
-    x.each_with_index do |y, yi|
-      if (y > 0 && (yi + begin_column + direction < 0 || yi + begin_column + direction > COLUMN-1 || board[xi][yi + direction] > 0))
+      # return a colision with the wall if the conditions below are met
+      if 
+        y > 0 && ( # the position os a part pof the tetromino and
+          yi + begin_column + direction < 0 || # the position is out of bounds to the left or
+          yi + begin_column + direction > COLUMN-1 || # the position is out of bounds to the right or 
+          xi+begin_row >= ROW || # the position is out of bounds to the bottom or
+          board[xi+begin_row][yi+begin_column + direction] > 0 # the board is not empty at that position
+          )
         return true
       end
     end
@@ -161,17 +156,17 @@ begin_row = 0
 
 on :key_down do |event|
   if event.key == "left"
-    if !hit_wall(board, piece, begin_column, begin_row, -1)
+    if !detect_colision(board, piece, begin_column, begin_row, -1)
       begin_column -= 1
     end
   elsif event.key == "right"
-    if !hit_wall(board, piece, begin_column, begin_row, +1)
+    if !detect_colision(board, piece, begin_column, begin_row, +1)
       begin_column += 1
     end
   elsif event.key == "space"
     # rotate the teromino if it does not colide
     rotated_piece = piece.reverse.transpose
-    if !hit_wall(board, rotated_piece, begin_column, begin_row, 0) then
+    if !detect_colision(board, rotated_piece, begin_column, begin_row) then
       piece = piece.reverse.transpose
     end
   elsif event.key == "down"
